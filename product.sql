@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS mr_group (
   gr_tenant_id INTEGER NOT NULL REFERENCES tbl_tenant (tenant_id),
   gr_name VARCHAR(250) NOT NULL,
   gr_status SMALLINT NOT NULL DEFAULT 1 CHECK (gr_status IN (0, 1)),
-  gr_delflag SMALLINT NOT NULL DEFAULT 1 CHECK (gr_delflag IN (0, 1)),
+  gr_delflag SMALLINT NOT NULL DEFAULT 0 CHECK (gr_delflag IN (0, 1)),
   gr_created TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   gr_maker_id INTEGER,
   gr_modified TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -79,9 +79,28 @@ ALTER TABLE mr_group
 
 DROP INDEX IF EXISTS uq_tbl_group_tenant_name;
 DROP INDEX IF EXISTS uq_mr_group_tenant_name;
+
+DO $$
+DECLARE
+  old_default TEXT;
+BEGIN
+  SELECT pg_get_expr(adbin, adrelid)
+    INTO old_default
+    FROM pg_attrdef
+   WHERE adrelid = 'mr_group'::regclass
+     AND adnum = (
+       SELECT attnum FROM pg_attribute
+        WHERE attrelid = 'mr_group'::regclass AND attname = 'gr_delflag'
+     );
+  IF COALESCE(old_default, '') ~ '^1($|::)' THEN
+    UPDATE mr_group SET gr_delflag = 1 - gr_delflag;
+  END IF;
+  ALTER TABLE mr_group ALTER COLUMN gr_delflag SET DEFAULT 0;
+END $$;
+
 CREATE UNIQUE INDEX uq_mr_group_tenant_name
   ON mr_group (gr_tenant_id, LOWER(gr_name))
-  WHERE gr_delflag = 1;
+  WHERE gr_delflag = 0;
 
 DROP INDEX IF EXISTS ix_tbl_group_tenant_status_name;
 DROP INDEX IF EXISTS ix_mr_group_tenant_status_name;
@@ -94,7 +113,7 @@ CREATE TABLE IF NOT EXISTS mr_subgroup (
   sg_gr_id BIGINT NOT NULL,
   sg_name VARCHAR(250) NOT NULL,
   sg_status SMALLINT NOT NULL DEFAULT 1 CHECK (sg_status IN (0, 1)),
-  sg_delflag SMALLINT NOT NULL DEFAULT 1 CHECK (sg_delflag IN (0, 1)),
+  sg_delflag SMALLINT NOT NULL DEFAULT 0 CHECK (sg_delflag IN (0, 1)),
   sg_created TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   sg_maker_id INTEGER,
   sg_modified TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -166,9 +185,28 @@ ALTER TABLE mr_subgroup
 
 DROP INDEX IF EXISTS uq_tbl_subgroup_tenant_group_name;
 DROP INDEX IF EXISTS uq_mr_subgroup_tenant_group_name;
+
+DO $$
+DECLARE
+  old_default TEXT;
+BEGIN
+  SELECT pg_get_expr(adbin, adrelid)
+    INTO old_default
+    FROM pg_attrdef
+   WHERE adrelid = 'mr_subgroup'::regclass
+     AND adnum = (
+       SELECT attnum FROM pg_attribute
+        WHERE attrelid = 'mr_subgroup'::regclass AND attname = 'sg_delflag'
+     );
+  IF COALESCE(old_default, '') ~ '^1($|::)' THEN
+    UPDATE mr_subgroup SET sg_delflag = 1 - sg_delflag;
+  END IF;
+  ALTER TABLE mr_subgroup ALTER COLUMN sg_delflag SET DEFAULT 0;
+END $$;
+
 CREATE UNIQUE INDEX uq_mr_subgroup_tenant_group_name
   ON mr_subgroup (sg_tenant_id, sg_gr_id, LOWER(sg_name))
-  WHERE sg_delflag = 1;
+  WHERE sg_delflag = 0;
 
 DROP INDEX IF EXISTS ix_tbl_subgroup_tenant_group_status_name;
 DROP INDEX IF EXISTS ix_mr_subgroup_tenant_group_status_name;

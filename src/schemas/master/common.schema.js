@@ -4,6 +4,14 @@ const id = Joi.number().integer().positive().max(Number.MAX_SAFE_INTEGER).requir
 
 export const masterIdSchema = Joi.object({ id }).required()
 
+export const groupMasterIdSchema = Joi.object({
+  groupId: id,
+}).required()
+
+export const subgroupMasterIdSchema = Joi.object({
+  subgroupId: id,
+}).required()
+
 export const masterListSchema = Joi.object({
   page: Joi.number().integer().min(1).default(1),
   limit: Joi.number().integer().min(1).max(100).default(20),

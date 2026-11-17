@@ -9,8 +9,8 @@ import {
 export async function listSubgroups(tenantId, { page, limit, status, search, groupId }) {
   const filters = [
     's.sg_tenant_id = $1',
-    's.sg_delflag = 1',
-    'g.gr_delflag = 1',
+    's.sg_delflag = 0',
+    'g.gr_delflag = 0',
     getStatusCondition(status, 's.sg_status'),
   ]
   const values = [tenantId]
@@ -31,7 +31,7 @@ export async function listSubgroups(tenantId, { page, limit, status, search, gro
          FROM mr_subgroup s
          JOIN mr_group g
            ON g.gr_tenant_id = s.sg_tenant_id AND g.gr_id = s.sg_gr_id
-          AND g.gr_delflag = 1
+          AND g.gr_delflag = 0
         WHERE ${where}`,
       values,
     ),
@@ -48,7 +48,7 @@ export async function listSubgroups(tenantId, { page, limit, status, search, gro
          FROM mr_subgroup s
          JOIN mr_group g
            ON g.gr_tenant_id = s.sg_tenant_id AND g.gr_id = s.sg_gr_id
-          AND g.gr_delflag = 1
+          AND g.gr_delflag = 0
         WHERE ${where}
         ORDER BY g.gr_name, s.sg_name, s.sg_id
         LIMIT $${values.length + 1} OFFSET $${values.length + 2}`,
@@ -72,8 +72,8 @@ export async function getSubgroup(tenantId, subgroupId) {
        FROM mr_subgroup s
        JOIN mr_group g
          ON g.gr_tenant_id = s.sg_tenant_id AND g.gr_id = s.sg_gr_id
-        AND g.gr_delflag = 1
-      WHERE s.sg_tenant_id = $1 AND s.sg_id = $2 AND s.sg_delflag = 1`,
+        AND g.gr_delflag = 0
+      WHERE s.sg_tenant_id = $1 AND s.sg_id = $2 AND s.sg_delflag = 0`,
     [tenantId, subgroupId],
   )
   return rows[0] ?? null
@@ -88,7 +88,7 @@ export async function createSubgroup(tenantId, userId, { groupId, subgroupName }
       `SELECT gr_id
          FROM mr_group
         WHERE gr_tenant_id = $1 AND gr_id = $2
-          AND gr_status = 1 AND gr_delflag = 1
+          AND gr_status = 1 AND gr_delflag = 0
         FOR UPDATE`,
       [tenantId, groupId],
     )
@@ -136,8 +136,8 @@ export async function updateSubgroup(
               sg_modified = NOW()
          FROM mr_group g
         WHERE s.sg_tenant_id = $1 AND s.sg_id = $2
-          AND s.sg_delflag = 1
-          AND g.gr_tenant_id = $1 AND g.gr_id = $3 AND g.gr_delflag = 1
+          AND s.sg_delflag = 0
+          AND g.gr_tenant_id = $1 AND g.gr_id = $3 AND g.gr_delflag = 0
           AND (g.gr_status = 1 OR COALESCE($5, s.sg_status) = 0)
         RETURNING s.sg_id AS "subgroupId"`,
       [tenantId, subgroupId, groupId, subgroupName, statusId ?? null],
@@ -164,8 +164,8 @@ export async function deleteSubgroup(tenantId, userId, subgroupId) {
     await client.query('BEGIN')
     const { rowCount } = await client.query(
       `UPDATE mr_subgroup
-          SET sg_delflag = 0, sg_modified = NOW()
-        WHERE sg_tenant_id = $1 AND sg_id = $2 AND sg_delflag = 1`,
+          SET sg_delflag = 1, sg_modified = NOW()
+        WHERE sg_tenant_id = $1 AND sg_id = $2 AND sg_delflag = 0`,
       [tenantId, subgroupId],
     )
     if (rowCount > 0) {

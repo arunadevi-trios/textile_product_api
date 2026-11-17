@@ -44,18 +44,20 @@ Run the DDL in `product.sql` against the database after the existing `tbl_tenant
 
 Group and subgroup code is organized by domain under `src/controllers/master`, `src/routes/master`, `src/schemas/master`, and `src/services/master`. The OpenAPI specification is composed from separate route and schema definitions under `src/docs/openapi`.
 
-- `GET /api/groups?page=1&limit=20&status=active&search=apparel` — paginated groups with their subgroup counts.
-- `POST /api/groups` — create with `{ "groupName": "Apparel" }`.
-- `GET /api/groups/:id` — get a group.
-- `PUT /api/groups/:id` — rename or change status with `{ "groupName": "Clothing", "statusId": 1 }`.
-- `DELETE /api/groups/:id` — soft-delete a group only when it has no visible subgroups; otherwise returns `409 GROUP_HAS_SUBGROUPS`.
-- `GET /api/subgroups?page=1&limit=20&status=active&search=mens` — paginated subgroups, including their group name and ID.
-- `POST /api/subgroups` — create with `{ "groupId": 1, "subgroupName": "MensWear" }`.
-- `GET /api/subgroups/:id` — get a subgroup and its group name.
-- `PUT /api/subgroups/:id` — change its group or name with `{ "groupId": 1, "subgroupName": "WomensWear" }`.
-- `DELETE /api/subgroups/:id` — soft-delete a subgroup; use `PUT` with `statusId: 0` to deactivate it instead.
+The group and subgroup master endpoints accept all input in a JSON body (including IDs, pagination, search, and filters):
 
-`gr_delflag`/`sg_delflag` set to `1` means a row is visible; deleting sets the flag to `0`, hides it from list/detail endpoints, and allows its name to be reused. `gr_maker_id`/`sg_maker_id` store the authenticated user ID that created each record. Successful creates, updates, status changes, and soft-deletes each write a separate row to `tbl_userlog` with the tenant and acting user ID. The migration preserves any existing creator IDs when replacing the previous UID/MUID columns and backfills existing log tenants from `tbl_users`; it requires every existing log user to map to a tenant. Groups with visible subgroups cannot be deleted or deactivated; delete their subgroups first. Names must contain 2–250 characters, use only English letters and digits, and may have single spaces between words (no leading, trailing, or repeated spaces); Joi validates them in the API and the database does not impose a name-format check. List filters accept `status=active`, `status=inactive`, or `status=all` (defaults to active); pagination is performed by the API, with `limit` capped at 100. Group names are unique per tenant, and subgroup names are unique within each tenant group among visible rows.
+- `POST /api/master/group/getMasterList` — for example `{ "page": 1, "limit": 20, "status": "active", "search": "apparel" }`.
+- `POST /api/master/group/setMaster` — create with `{ "groupName": "Apparel" }`.
+- `POST /api/master/group/getMasterDetails` — get a group with `{ "groupId": 1 }`.
+- `POST /api/master/group/updateMaster` — update with `{ "groupId": 1, "groupName": "Clothing", "statusId": 1 }`.
+- `POST /api/master/group/deleteMaster` — soft-delete with `{ "groupId": 1 }`; deletion is blocked while subgroups exist.
+- `POST /api/master/subgroup/getMasterList` — for example `{ "page": 1, "limit": 20, "status": "active", "search": "mens", "groupId": 1 }`.
+- `POST /api/master/subgroup/setMaster` — create with `{ "groupId": 1, "subgroupName": "Mens Wear" }`.
+- `POST /api/master/subgroup/getMasterDetails` — get a subgroup with `{ "subgroupId": 1 }`.
+- `POST /api/master/subgroup/updateMaster` — update with `{ "subgroupId": 1, "groupId": 1, "subgroupName": "Womens Wear", "statusId": 1 }`.
+- `POST /api/master/subgroup/deleteMaster` — soft-delete with `{ "subgroupId": 1 }`.
+
+The existing REST-style `/api/groups` and `/api/subgroups` routes remain available for compatibility. `gr_delflag`/`sg_delflag` set to `0` means a row exists; deleting sets the flag to `1`, hides it from list/detail endpoints, and allows its name to be reused. `gr_maker_id`/`sg_maker_id` store the authenticated user ID that created each record. Successful creates, updates, status changes, and soft-deletes each write a separate row to `tbl_userlog` with the tenant and acting user ID. The migration preserves existing creator IDs, changes existing soft-delete flags to the new convention, and backfills existing log tenants from `tbl_users`; it requires every existing log user to map to a tenant. Groups with visible subgroups cannot be deleted or deactivated; delete their subgroups first. Names must contain 2–250 characters, use only English letters and digits, and may have single spaces between words (no leading, trailing, or repeated spaces); Joi validates them in the API and the database does not impose a name-format check. List filters accept `status` values `active`, `inactive`, or `all` (default `active`); pagination is performed by the API, with `limit` capped at 100. Group names are unique per tenant, and subgroup names are unique within each tenant group among existing rows.
 
 ## Endpoints
 

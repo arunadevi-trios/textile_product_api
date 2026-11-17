@@ -8,9 +8,14 @@ import {
 } from '../../controllers/master/subgroup.controller.js'
 import { requireAuth } from '../../middleware/require-auth.js'
 import { validateRequest } from '../../middleware/validate-request.js'
-import { masterIdSchema, masterListSchema } from '../../schemas/master/common.schema.js'
+import {
+  masterIdSchema,
+  masterListSchema,
+  subgroupMasterIdSchema,
+} from '../../schemas/master/common.schema.js'
 import {
   subgroupCreateSchema,
+  subgroupUpdatePayloadSchema,
   subgroupUpdateSchema,
 } from '../../schemas/master/subgroup.schema.js'
 
@@ -28,5 +33,11 @@ router.put(
   updateSubgroup,
 )
 router.delete('/:id', validateRequest(masterIdSchema, 'params'), deleteSubgroup)
+
+router.post('/getMasterList', validateRequest(masterListSchema), listSubgroups)
+router.post('/setMaster', validateRequest(subgroupCreateSchema), createSubgroup)
+router.post('/getMasterDetails', validateRequest(subgroupMasterIdSchema), getSubgroup)
+router.post('/updateMaster', validateRequest(subgroupUpdatePayloadSchema), updateSubgroup)
+router.post('/deleteMaster', validateRequest(subgroupMasterIdSchema), deleteSubgroup)
 
 export default router

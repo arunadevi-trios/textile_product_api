@@ -50,13 +50,23 @@ test('Swagger endpoints expose the complete API specification and UI', async () 
     '/api/groups/{id}',
     '/api/subgroups',
     '/api/subgroups/{id}',
+    '/api/master/group/getMasterList',
+    '/api/master/group/setMaster',
+    '/api/master/group/getMasterDetails',
+    '/api/master/group/updateMaster',
+    '/api/master/group/deleteMaster',
+    '/api/master/subgroup/getMasterList',
+    '/api/master/subgroup/setMaster',
+    '/api/master/subgroup/getMasterDetails',
+    '/api/master/subgroup/updateMaster',
+    '/api/master/subgroup/deleteMaster',
   ]) {
     assert.ok(specification.paths[path], `${path} should be documented`)
   }
   const operationCount = Object.values(specification.paths)
     .reduce((total, path) => total + Object.keys(path)
       .filter((method) => ['get', 'post', 'put', 'delete'].includes(method)).length, 0)
-  assert.equal(operationCount, 15)
+  assert.equal(operationCount, 25)
 
   const uiResponse = await fetch(`${baseUrl}/api-docs/`)
   assert.equal(uiResponse.status, 200)
@@ -190,7 +200,7 @@ test('JWT tenant IDs accept safe numeric strings and reject invalid values', () 
   assert.equal(normalizeTenantId('9007199254740992'), null)
 })
 
-test('master list query validates server pagination and status filters', () => {
+test('master list payload validates server pagination and status filters', () => {
   assert.deepEqual(masterListSchema.validate({}).value, {
     page: 1,
     limit: 20,
@@ -223,8 +233,20 @@ test('group API validates names after authentication and before database access'
 })
 
 test('group and subgroup list endpoints are mounted and protected', async () => {
-  for (const endpoint of ['/api/groups', '/api/subgroups']) {
-    const response = await fetch(`${baseUrl}${endpoint}`)
+  for (const endpoint of [
+    '/api/groups',
+    '/api/subgroups',
+    '/api/master/group/getMasterList',
+    '/api/master/subgroup/getMasterList',
+  ]) {
+    const isPayloadEndpoint = endpoint.includes('/master/')
+    const response = await fetch(`${baseUrl}${endpoint}`, isPayloadEndpoint
+      ? {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ page: 1 }),
+        }
+      : undefined)
     assert.equal(response.status, 401, `${endpoint} should require authentication, not return 404`)
     assert.equal((await response.json()).error.code, 'UNAUTHORIZED')
   }

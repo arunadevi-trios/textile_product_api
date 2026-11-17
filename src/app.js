@@ -41,6 +41,8 @@ app.use(
   swaggerUi.setup(openapi, { explorer: true }),
 )
 app.use('/api/auth', authRoutes)
+app.use('/api/master/group', groupRoutes)
+app.use('/api/master/subgroup', subgroupRoutes)
 app.use('/api/groups', groupRoutes)
 app.use('/api/subgroups', subgroupRoutes)
 app.use(notFound)

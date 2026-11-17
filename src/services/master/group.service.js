@@ -15,7 +15,7 @@ function groupHasSubgroupsError() {
 export async function listGroups(tenantId, { page, limit, status, search }) {
   const filters = [
     'g.gr_tenant_id = $1',
-    'g.gr_delflag = 1',
+    'g.gr_delflag = 0',
     getStatusCondition(status, 'g.gr_status'),
   ]
   const values = [tenantId]
@@ -40,7 +40,7 @@ export async function listGroups(tenantId, { page, limit, status, search }) {
          FROM mr_group g
          LEFT JOIN mr_subgroup s
            ON s.sg_tenant_id = g.gr_tenant_id AND s.sg_gr_id = g.gr_id
-          AND s.sg_delflag = 1
+          AND s.sg_delflag = 0
         WHERE ${where}
         GROUP BY g.gr_id
         ORDER BY g.gr_name, g.gr_id
@@ -64,8 +64,8 @@ export async function getGroup(tenantId, groupId) {
        FROM mr_group g
        LEFT JOIN mr_subgroup s
          ON s.sg_tenant_id = g.gr_tenant_id AND s.sg_gr_id = g.gr_id
-        AND s.sg_delflag = 1
-      WHERE g.gr_tenant_id = $1 AND g.gr_id = $2 AND g.gr_delflag = 1
+        AND s.sg_delflag = 0
+      WHERE g.gr_tenant_id = $1 AND g.gr_id = $2 AND g.gr_delflag = 0
       GROUP BY g.gr_id`,
     [tenantId, groupId],
   )
@@ -107,7 +107,7 @@ export async function updateGroup(tenantId, userId, groupId, { groupName, status
     const currentGroup = await client.query(
       `SELECT gr_id AS "groupId", gr_status AS "statusId"
          FROM mr_group
-        WHERE gr_tenant_id = $1 AND gr_id = $2 AND gr_delflag = 1
+        WHERE gr_tenant_id = $1 AND gr_id = $2 AND gr_delflag = 0
         FOR UPDATE`,
       [tenantId, groupId],
     )
@@ -119,7 +119,7 @@ export async function updateGroup(tenantId, userId, groupId, { groupName, status
       const { rows } = await client.query(
         `SELECT EXISTS (
            SELECT 1 FROM mr_subgroup
-            WHERE sg_tenant_id = $1 AND sg_gr_id = $2 AND sg_delflag = 1
+            WHERE sg_tenant_id = $1 AND sg_gr_id = $2 AND sg_delflag = 0
          ) AS "hasSubgroups"`,
         [tenantId, groupId],
       )
@@ -142,7 +142,7 @@ export async function updateGroup(tenantId, userId, groupId, { groupName, status
     const count = await client.query(
       `SELECT COUNT(*)::INTEGER AS "subgroupCount"
          FROM mr_subgroup
-        WHERE sg_tenant_id = $1 AND sg_gr_id = $2 AND sg_delflag = 1`,
+        WHERE sg_tenant_id = $1 AND sg_gr_id = $2 AND sg_delflag = 0`,
       [tenantId, groupId],
     )
     await logUserAction(client, tenantId, userId, `UPDATE_GROUP: id=${groupId}`)
@@ -163,7 +163,7 @@ export async function deleteGroup(tenantId, userId, groupId) {
     const group = await client.query(
       `SELECT gr_id
          FROM mr_group
-        WHERE gr_tenant_id = $1 AND gr_id = $2 AND gr_delflag = 1
+        WHERE gr_tenant_id = $1 AND gr_id = $2 AND gr_delflag = 0
         FOR UPDATE`,
       [tenantId, groupId],
     )
@@ -174,15 +174,15 @@ export async function deleteGroup(tenantId, userId, groupId) {
     const { rows } = await client.query(
       `SELECT EXISTS (
          SELECT 1 FROM mr_subgroup
-          WHERE sg_tenant_id = $1 AND sg_gr_id = $2 AND sg_delflag = 1
+          WHERE sg_tenant_id = $1 AND sg_gr_id = $2 AND sg_delflag = 0
        ) AS "hasSubgroups"`,
       [tenantId, groupId],
     )
     if (rows[0].hasSubgroups) throw groupHasSubgroupsError()
     const result = await client.query(
       `UPDATE mr_group
-          SET gr_delflag = 0, gr_modified = NOW()
-        WHERE gr_tenant_id = $1 AND gr_id = $2 AND gr_delflag = 1`,
+          SET gr_delflag = 1, gr_modified = NOW()
+        WHERE gr_tenant_id = $1 AND gr_id = $2 AND gr_delflag = 0`,
       [tenantId, groupId],
     )
     if (result.rowCount > 0) {

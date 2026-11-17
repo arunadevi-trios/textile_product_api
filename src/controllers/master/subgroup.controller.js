@@ -29,7 +29,9 @@ export async function listSubgroups(req, res, next) {
   try {
     const tenantId = getTenantId(req, res)
     if (tenantId === null) return
-    return res.status(200).json(await subgroupService.listSubgroups(tenantId, req.validatedQuery))
+    return res.status(200).json(
+      await subgroupService.listSubgroups(tenantId, req.validatedBody ?? req.validatedQuery),
+    )
   } catch (error) {
     return next(error)
   }
@@ -39,7 +41,8 @@ export async function getSubgroup(req, res, next) {
   try {
     const tenantId = getTenantId(req, res)
     if (tenantId === null) return
-    const subgroup = await subgroupService.getSubgroup(tenantId, req.validatedParams.id)
+    const subgroupId = req.validatedBody?.subgroupId ?? req.validatedParams.id
+    const subgroup = await subgroupService.getSubgroup(tenantId, subgroupId)
     return subgroup ? res.status(200).json(subgroup) : notFound(res, 'Subgroup')
   } catch (error) {
     return next(error)
@@ -76,7 +79,7 @@ export async function updateSubgroup(req, res, next) {
     const subgroup = await subgroupService.updateSubgroup(
       tenantId,
       userId,
-      req.validatedParams.id,
+      req.validatedBody.subgroupId ?? req.validatedParams.id,
       req.validatedBody,
     )
     return subgroup ? res.status(200).json(subgroup) : notFound(res, 'Subgroup or active group')
@@ -94,7 +97,7 @@ export async function deleteSubgroup(req, res, next) {
     const deleted = await subgroupService.deleteSubgroup(
       tenantId,
       userId,
-      req.validatedParams.id,
+      req.validatedBody?.subgroupId ?? req.validatedParams.id,
     )
     return deleted ? res.status(204).end() : notFound(res, 'Subgroup')
   } catch (error) {

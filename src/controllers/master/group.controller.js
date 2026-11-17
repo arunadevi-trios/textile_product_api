@@ -29,7 +29,9 @@ export async function listGroups(req, res, next) {
   try {
     const tenantId = getTenantId(req, res)
     if (tenantId === null) return
-    return res.status(200).json(await groupService.listGroups(tenantId, req.validatedQuery))
+    return res.status(200).json(
+      await groupService.listGroups(tenantId, req.validatedBody ?? req.validatedQuery),
+    )
   } catch (error) {
     return next(error)
   }
@@ -39,7 +41,8 @@ export async function getGroup(req, res, next) {
   try {
     const tenantId = getTenantId(req, res)
     if (tenantId === null) return
-    const group = await groupService.getGroup(tenantId, req.validatedParams.id)
+    const groupId = req.validatedBody?.groupId ?? req.validatedParams.id
+    const group = await groupService.getGroup(tenantId, groupId)
     return group ? res.status(200).json(group) : notFound(res)
   } catch (error) {
     return next(error)
@@ -69,7 +72,7 @@ export async function updateGroup(req, res, next) {
     const group = await groupService.updateGroup(
       tenantId,
       userId,
-      req.validatedParams.id,
+      req.validatedBody.groupId ?? req.validatedParams.id,
       req.validatedBody,
     )
     return group ? res.status(200).json(group) : notFound(res)
@@ -84,7 +87,8 @@ export async function deleteGroup(req, res, next) {
     if (tenantId === null) return
     const userId = getUserId(req, res)
     if (userId === null) return
-    const deleted = await groupService.deleteGroup(tenantId, userId, req.validatedParams.id)
+    const groupId = req.validatedBody?.groupId ?? req.validatedParams.id
+    const deleted = await groupService.deleteGroup(tenantId, userId, groupId)
     return deleted ? res.status(204).end() : notFound(res)
   } catch (error) {
     return next(error)

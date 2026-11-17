@@ -16,3 +16,7 @@ export const groupCreateSchema = Joi.object({
 export const groupUpdateSchema = groupCreateSchema.keys({
   statusId: Joi.number().integer().valid(0, 1),
 })
+
+export const groupUpdatePayloadSchema = groupUpdateSchema.keys({
+  groupId: Joi.number().integer().positive().max(Number.MAX_SAFE_INTEGER).required(),
+})

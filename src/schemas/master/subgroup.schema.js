@@ -18,3 +18,7 @@ export const subgroupCreateSchema = Joi.object({
 export const subgroupUpdateSchema = subgroupCreateSchema.keys({
   statusId: Joi.number().integer().valid(0, 1),
 })
+
+export const subgroupUpdatePayloadSchema = subgroupUpdateSchema.keys({
+  subgroupId: Joi.number().integer().positive().max(Number.MAX_SAFE_INTEGER).required(),
+})

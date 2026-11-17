@@ -33,7 +33,7 @@ function fakeClient(responses) {
 test('group creation records its creator and writes an audit log', async (t) => {
   const client = fakeClient([
     {},
-    { rows: [{ groupId: 7, groupName: 'Group7', statusId: 1, recordFlag: 1 }] },
+    { rows: [{ groupId: 7, groupName: 'Group7', statusId: 1, recordFlag: 0 }] },
     {},
     {},
   ])
@@ -92,8 +92,9 @@ test('group deletion marks an unmapped group as removed', async (t) => {
 
   assert.equal(await deleteGroup(1, 3, 7), true)
   assert.ok(client.statements.some(
-    (sql) => sql.includes('UPDATE mr_group') && sql.includes('gr_delflag = 0'),
+    (sql) => sql.includes('UPDATE mr_group') && sql.includes('SET gr_delflag = 1'),
   ))
+  assert.match(client.statements[1], /gr_delflag = 0/)
   assert.match(client.statements[4], /INSERT INTO tbl_userlog/)
   assert.ok(client.statements.includes('COMMIT'))
 })
@@ -128,6 +129,7 @@ test('subgroup deletion marks the row as removed', async (t) => {
 
   assert.equal(await deleteSubgroup(1, 3, 9), true)
   assert.match(client.statements[1], /UPDATE mr_subgroup/)
+  assert.match(client.statements[1], /SET sg_delflag = 1/)
   assert.match(client.statements[1], /sg_delflag = 0/)
   assert.match(client.statements[2], /INSERT INTO tbl_userlog/)
 })
