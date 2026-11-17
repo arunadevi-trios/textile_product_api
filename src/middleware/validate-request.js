@@ -1,6 +1,6 @@
-export function validateRequest(schema) {
+export function validateRequest(schema, source = 'body') {
   return (req, res, next) => {
-    const { error, value } = schema.validate(req.body, {
+    const { error, value } = schema.validate(req[source], {
       abortEarly: false,
       stripUnknown: true,
     })
@@ -16,7 +16,10 @@ export function validateRequest(schema) {
         },
       })
     }
-    req.validatedBody = value
+    const destination = source === 'body'
+      ? 'validatedBody'
+      : `validated${source[0].toUpperCase()}${source.slice(1)}`
+    req[destination] = value
     next()
   }
 }

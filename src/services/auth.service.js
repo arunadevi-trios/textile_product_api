@@ -3,14 +3,19 @@ import jwt from 'jsonwebtoken'
 import { env } from '../config/env.js'
 import { pool } from '../config/database.js'
 import { hashPassword, verifyPassword } from '../utils/crypto.js'
+import { normalizeTenantId } from '../utils/tenant-id.js'
 
 function hashRefreshToken(token) {
   return createHash('sha256').update(token).digest('hex')
 }
 
 function createAccessToken(user) {
+  const tenantId = normalizeTenantId(user.tenant_id)
+  if (tenantId === null) {
+    throw new Error('Cannot issue an access token without a valid tenant ID.')
+  }
   return jwt.sign(
-    { role: user.userrole_id ?? null },
+    { role: user.userrole_id ?? null, tenantId },
     env.jwtSecret,
     {
       subject: String(user.id),
@@ -37,7 +42,7 @@ function toSafeUser(user) {
 
 export async function authenticateUser(username, password, rememberMe) {
   const { rows } = await pool.query(
-    `SELECT user_id AS id, user_name, password, userrole_id
+    `SELECT user_id AS id, user_name, password, userrole_id, tenant_id
        FROM tbl_users
       WHERE LOWER(user_name) = $1 AND status = 1
       LIMIT 1`,
@@ -88,7 +93,7 @@ export async function refreshUserSession(refreshToken) {
     }
 
     const userResult = await client.query(
-      `SELECT user_id AS id, user_name, userrole_id
+      `SELECT user_id AS id, user_name, userrole_id, tenant_id
          FROM tbl_users
         WHERE user_id = $1 AND status = 1
         LIMIT 1`,

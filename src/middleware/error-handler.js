@@ -17,6 +17,22 @@ export function errorHandler(error, req, res, next) {
       error: { code: 'PAYLOAD_TOO_LARGE', message: 'Request body exceeds the allowed size.' },
     })
   }
+  if (error?.code === 'GROUP_HAS_SUBGROUPS') {
+    return res.status(409).json({
+      error: { code: error.code, message: error.message },
+    })
+  }
+  if (
+    error?.code === '23505'
+    && [
+      'uq_mr_group_tenant_name',
+      'uq_mr_subgroup_tenant_group_name',
+    ].includes(error.constraint)
+  ) {
+    return res.status(409).json({
+      error: { code: 'DUPLICATE_MASTER_NAME', message: 'That name already exists in this tenant.' },
+    })
+  }
   if (error?.code === '23505') {
     return res.status(409).json({
       error: { code: 'USERNAME_EXISTS', message: 'An account with that username already exists.' },

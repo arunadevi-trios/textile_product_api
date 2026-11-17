@@ -8,6 +8,7 @@ try {
   await connectDatabase()
   server = app.listen(env.port, () => {
     console.log(`Textile Product API listening on port ${env.port}`)
+    console.log(`Swagger UI available at http://localhost:${env.port}/api-docs`)
   })
 } catch (error) {
   console.error('Unable to start the API because the database connection failed.', error)
