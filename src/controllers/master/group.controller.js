@@ -1,96 +1,72 @@
-import * as groupService from '../../services/master/group.service.js'
-import { normalizeTenantId } from '../../utils/tenant-id.js'
+/** Group controller */
+import * as groupService from '../../services/master/group.service.js';
 
-function getTenantId(req, res) {
-  const tenantId = normalizeTenantId(req.auth.tenantId)
-  if (tenantId !== null) return tenantId
-  res.status(403).json({
-    error: { code: 'TENANT_REQUIRED', message: 'The authenticated account has no valid tenant.' },
-  })
-  return null
-}
-
-function getUserId(req, res) {
-  const userId = normalizeTenantId(req.auth.sub)
-  if (userId !== null) return userId
-  res.status(403).json({
-    error: { code: 'USER_REQUIRED', message: 'The authenticated account has no valid user ID.' },
-  })
-  return null
-}
-
-function notFound(res) {
-  return res.status(404).json({
-    error: { code: 'NOT_FOUND', message: 'Group was not found.' },
-  })
-}
-
-export async function listGroups(req, res, next) {
+/** Get group list */
+export async function listGroups(req, res) {
+  let response = {};
   try {
-    const tenantId = getTenantId(req, res)
-    if (tenantId === null) return
-    return res.status(200).json(
-      await groupService.listGroups(tenantId, req.validatedBody ?? req.validatedQuery),
-    )
+    const responseFromService = await groupService.listGroups(req);
+    if (responseFromService) {
+      response = responseFromService;
+    }
   } catch (error) {
-    return next(error)
+    response.message = error.message;
   }
+  return res.send(response);
 }
 
-export async function getGroup(req, res, next) {
+/** Get group details */
+export async function getGroup(req, res) {
+  let response = {};
   try {
-    const tenantId = getTenantId(req, res)
-    if (tenantId === null) return
-    const groupId = req.validatedBody?.groupId ?? req.validatedParams.id
-    const group = await groupService.getGroup(tenantId, groupId)
-    return group ? res.status(200).json(group) : notFound(res)
+    const responseFromService = await groupService.getGroup(req);
+    if (responseFromService) {
+      response = responseFromService;
+    }
   } catch (error) {
-    return next(error)
+    response.message = error.message;
   }
+  return res.send(response);
 }
 
-export async function createGroup(req, res, next) {
+/** Create group */
+export async function createGroup(req, res) {
+  let response = {};
   try {
-    const tenantId = getTenantId(req, res)
-    if (tenantId === null) return
-    const userId = getUserId(req, res)
-    if (userId === null) return
-    return res.status(201).json(
-      await groupService.createGroup(tenantId, userId, req.validatedBody.groupName),
-    )
+    const responseFromService = await groupService.createGroup(req);
+    if (responseFromService) {
+      response = responseFromService;
+    }
   } catch (error) {
-    return next(error)
+    response.message = error.message;
   }
+  return res.send(response);
 }
 
-export async function updateGroup(req, res, next) {
+/** Update group */
+export async function updateGroup(req, res) {
+  let response = {};
   try {
-    const tenantId = getTenantId(req, res)
-    if (tenantId === null) return
-    const userId = getUserId(req, res)
-    if (userId === null) return
-    const group = await groupService.updateGroup(
-      tenantId,
-      userId,
-      req.validatedBody.groupId ?? req.validatedParams.id,
-      req.validatedBody,
-    )
-    return group ? res.status(200).json(group) : notFound(res)
+    const responseFromService = await groupService.updateGroup(req);
+    if (responseFromService) {
+      response = responseFromService;
+    }
   } catch (error) {
-    return next(error)
+    response.message = error.message;
   }
+  return res.send(response);
 }
 
-export async function deleteGroup(req, res, next) {
+/** Delete group */
+export async function deleteGroup(req, res) {
+  let response = {};
   try {
-    const tenantId = getTenantId(req, res)
-    if (tenantId === null) return
-    const userId = getUserId(req, res)
-    if (userId === null) return
-    const groupId = req.validatedBody?.groupId ?? req.validatedParams.id
-    const deleted = await groupService.deleteGroup(tenantId, userId, groupId)
-    return deleted ? res.status(200).json(null) : notFound(res)
+    const responseFromService = await groupService.deleteGroup(req);
+    if (responseFromService) {
+      response = responseFromService;
+    }
   } catch (error) {
-    return next(error)
+    response.message = error.message;
   }
+  return res.send(response);
 }

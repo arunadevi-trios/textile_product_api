@@ -1,101 +1,72 @@
-import * as taxService from '../../services/master/tax.service.js'
-import { normalizeTenantId } from '../../utils/tenant-id.js'
+/** Tax controller */
+import * as taxService from '../../services/master/tax.service.js';
 
-function getIdentity(req, res) {
-  const tenantId = normalizeTenantId(req.auth.tenantId)
-  if (tenantId === null) {
-    res.status(403).json({
-      error: { code: 'TENANT_REQUIRED', message: 'The authenticated account has no valid tenant.' },
-    })
-    return null
-  }
-  const userId = normalizeTenantId(req.auth.sub)
-  if (userId === null) {
-    res.status(403).json({
-      error: { code: 'USER_REQUIRED', message: 'The authenticated account has no valid user ID.' },
-    })
-    return null
-  }
-  return { tenantId, userId }
-}
-
-function notFound(res) {
-  return res.status(404).json({
-    error: { code: 'NOT_FOUND', message: 'Tax was not found.' },
-  })
-}
-
-export async function listTaxes(req, res, next) {
+/** Get tax list */
+export async function listTaxes(req, res) {
+  let response = {};
   try {
-    const tenantId = normalizeTenantId(req.auth.tenantId)
-    if (tenantId === null) {
-      return res.status(403).json({
-        error: { code: 'TENANT_REQUIRED', message: 'The authenticated account has no valid tenant.' },
-      })
+    const responseFromService = await taxService.listTaxes(req);
+    if (responseFromService) {
+      response = responseFromService;
     }
-    return res.status(200).json(
-      await taxService.listTaxes(tenantId, req.validatedBody ?? req.validatedQuery),
-    )
   } catch (error) {
-    return next(error)
+    response.message = error.message;
   }
+  return res.send(response);
 }
 
-export async function getTax(req, res, next) {
+/** Get tax details */
+export async function getTax(req, res) {
+  let response = {};
   try {
-    const tenantId = normalizeTenantId(req.auth.tenantId)
-    if (tenantId === null) {
-      return res.status(403).json({
-        error: { code: 'TENANT_REQUIRED', message: 'The authenticated account has no valid tenant.' },
-      })
+    const responseFromService = await taxService.getTax(req);
+    if (responseFromService) {
+      response = responseFromService;
     }
-    const taxId = req.validatedBody?.taxId ?? req.validatedParams.id
-    const tax = await taxService.getTax(tenantId, taxId)
-    return tax ? res.status(200).json(tax) : notFound(res)
   } catch (error) {
-    return next(error)
+    response.message = error.message;
   }
+  return res.send(response);
 }
 
-export async function createTax(req, res, next) {
+/** Create tax */
+export async function createTax(req, res) {
+  let response = {};
   try {
-    const identity = getIdentity(req, res)
-    if (!identity) return
-    return res.status(201).json(
-      await taxService.createTax(identity.tenantId, identity.userId, req.validatedBody.taxPercentage),
-    )
+    const responseFromService = await taxService.createTax(req);
+    if (responseFromService) {
+      response = responseFromService;
+    }
   } catch (error) {
-    return next(error)
+    response.message = error.message;
   }
+  return res.send(response);
 }
 
-export async function updateTax(req, res, next) {
+/** Update tax */
+export async function updateTax(req, res) {
+  let response = {};
   try {
-    const identity = getIdentity(req, res)
-    if (!identity) return
-    const tax = await taxService.updateTax(
-      identity.tenantId,
-      identity.userId,
-      req.validatedBody.taxId ?? req.validatedParams.id,
-      req.validatedBody,
-    )
-    return tax ? res.status(200).json(tax) : notFound(res)
+    const responseFromService = await taxService.updateTax(req);
+    if (responseFromService) {
+      response = responseFromService;
+    }
   } catch (error) {
-    return next(error)
+    response.message = error.message;
   }
+  return res.send(response);
 }
 
-export async function deleteTax(req, res, next) {
+/** Delete tax */
+export async function deleteTax(req, res) {
+  let response = {};
   try {
-    const identity = getIdentity(req, res)
-    if (!identity) return
-    const deleted = await taxService.deleteTax(
-      identity.tenantId,
-      identity.userId,
-      req.validatedBody?.taxId ?? req.validatedParams.id,
-    )
-    return deleted ? res.status(200).json(null) : notFound(res)
+    const responseFromService = await taxService.deleteTax(req);
+    if (responseFromService) {
+      response = responseFromService;
+    }
   } catch (error) {
-    return next(error)
+    response.message = error.message;
   }
+  return res.send(response);
 }

@@ -1,101 +1,72 @@
-import * as brandService from '../../services/master/brand.service.js'
-import { normalizeTenantId } from '../../utils/tenant-id.js'
+/** Brand controller */
+import * as brandService from '../../services/master/brand.service.js';
 
-function getIdentity(req, res) {
-  const tenantId = normalizeTenantId(req.auth.tenantId)
-  if (tenantId === null) {
-    res.status(403).json({
-      error: { code: 'TENANT_REQUIRED', message: 'The authenticated account has no valid tenant.' },
-    })
-    return null
-  }
-  const userId = normalizeTenantId(req.auth.sub)
-  if (userId === null) {
-    res.status(403).json({
-      error: { code: 'USER_REQUIRED', message: 'The authenticated account has no valid user ID.' },
-    })
-    return null
-  }
-  return { tenantId, userId }
-}
-
-function notFound(res) {
-  return res.status(404).json({
-    error: { code: 'NOT_FOUND', message: 'Brand was not found.' },
-  })
-}
-
-export async function listBrands(req, res, next) {
+/** Get brand list */
+export async function listBrands(req, res) {
+  let response = {};
   try {
-    const tenantId = normalizeTenantId(req.auth.tenantId)
-    if (tenantId === null) {
-      return res.status(403).json({
-        error: { code: 'TENANT_REQUIRED', message: 'The authenticated account has no valid tenant.' },
-      })
+    const responseFromService = await brandService.listBrands(req);
+    if (responseFromService) {
+      response = responseFromService;
     }
-    return res.status(200).json(
-      await brandService.listBrands(tenantId, req.validatedBody ?? req.validatedQuery),
-    )
   } catch (error) {
-    return next(error)
+    response.message = error.message;
   }
+  return res.send(response);
 }
 
-export async function getBrand(req, res, next) {
+/** Get brand details */
+export async function getBrand(req, res) {
+  let response = {};
   try {
-    const tenantId = normalizeTenantId(req.auth.tenantId)
-    if (tenantId === null) {
-      return res.status(403).json({
-        error: { code: 'TENANT_REQUIRED', message: 'The authenticated account has no valid tenant.' },
-      })
+    const responseFromService = await brandService.getBrand(req);
+    if (responseFromService) {
+      response = responseFromService;
     }
-    const brandId = req.validatedBody?.brandId ?? req.validatedParams.id
-    const brand = await brandService.getBrand(tenantId, brandId)
-    return brand ? res.status(200).json(brand) : notFound(res)
   } catch (error) {
-    return next(error)
+    response.message = error.message;
   }
+  return res.send(response);
 }
 
-export async function createBrand(req, res, next) {
+/** Create brand */
+export async function createBrand(req, res) {
+  let response = {};
   try {
-    const identity = getIdentity(req, res)
-    if (!identity) return
-    return res.status(201).json(
-      await brandService.createBrand(identity.tenantId, identity.userId, req.validatedBody.brandName),
-    )
+    const responseFromService = await brandService.createBrand(req);
+    if (responseFromService) {
+      response = responseFromService;
+    }
   } catch (error) {
-    return next(error)
+    response.message = error.message;
   }
+  return res.send(response);
 }
 
-export async function updateBrand(req, res, next) {
+/** Update brand */
+export async function updateBrand(req, res) {
+  let response = {};
   try {
-    const identity = getIdentity(req, res)
-    if (!identity) return
-    const brand = await brandService.updateBrand(
-      identity.tenantId,
-      identity.userId,
-      req.validatedBody.brandId ?? req.validatedParams.id,
-      req.validatedBody,
-    )
-    return brand ? res.status(200).json(brand) : notFound(res)
+    const responseFromService = await brandService.updateBrand(req);
+    if (responseFromService) {
+      response = responseFromService;
+    }
   } catch (error) {
-    return next(error)
+    response.message = error.message;
   }
+  return res.send(response);
 }
 
-export async function deleteBrand(req, res, next) {
+/** Delete brand */
+export async function deleteBrand(req, res) {
+  let response = {};
   try {
-    const identity = getIdentity(req, res)
-    if (!identity) return
-    const deleted = await brandService.deleteBrand(
-      identity.tenantId,
-      identity.userId,
-      req.validatedBody?.brandId ?? req.validatedParams.id,
-    )
-    return deleted ? res.status(200).json(null) : notFound(res)
+    const responseFromService = await brandService.deleteBrand(req);
+    if (responseFromService) {
+      response = responseFromService;
+    }
   } catch (error) {
-    return next(error)
+    response.message = error.message;
   }
+  return res.send(response);
 }
