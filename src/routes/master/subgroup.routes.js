@@ -7,6 +7,7 @@ import {
   updateSubgroup,
 } from '../../controllers/master/subgroup.controller.js'
 import { requireAuth } from '../../middleware/require-auth.js'
+import { masterResponse } from '../../middleware/master-response.js'
 import { validateRequest } from '../../middleware/validate-request.js'
 import {
   masterIdSchema,
@@ -21,7 +22,7 @@ import {
 
 const router = Router()
 
-router.use(requireAuth)
+router.use(masterResponse, requireAuth)
 
 router.get('/', validateRequest(masterListSchema, 'query'), listSubgroups)
 router.post('/', validateRequest(subgroupCreateSchema), createSubgroup)

@@ -9,6 +9,8 @@ import { errorHandler, notFound } from './middleware/error-handler.js'
 import authRoutes from './routes/auth.routes.js'
 import groupRoutes from './routes/master/group.routes.js'
 import subgroupRoutes from './routes/master/subgroup.routes.js'
+import brandRoutes from './routes/master/brand.routes.js'
+import taxRoutes from './routes/master/tax.routes.js'
 
 const app = express()
 
@@ -43,8 +45,12 @@ app.use(
 app.use('/api/auth', authRoutes)
 app.use('/api/master/group', groupRoutes)
 app.use('/api/master/subgroup', subgroupRoutes)
+app.use('/api/master/brand', brandRoutes)
+app.use('/api/master/tax', taxRoutes)
 app.use('/api/groups', groupRoutes)
 app.use('/api/subgroups', subgroupRoutes)
+app.use('/api/brands', brandRoutes)
+app.use('/api/taxes', taxRoutes)
 app.use(notFound)
 app.use(errorHandler)
 

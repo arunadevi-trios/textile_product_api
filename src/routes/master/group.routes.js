@@ -7,6 +7,7 @@ import {
   updateGroup,
 } from '../../controllers/master/group.controller.js'
 import { requireAuth } from '../../middleware/require-auth.js'
+import { masterResponse } from '../../middleware/master-response.js'
 import { validateRequest } from '../../middleware/validate-request.js'
 import {
   groupMasterIdSchema,
@@ -21,7 +22,7 @@ import {
 
 const router = Router()
 
-router.use(requireAuth)
+router.use(masterResponse, requireAuth)
 
 router.get('/', validateRequest(masterListSchema, 'query'), listGroups)
 router.post('/', validateRequest(groupCreateSchema), createGroup)

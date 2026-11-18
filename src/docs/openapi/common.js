@@ -11,6 +11,9 @@ export const commonComponents = {
       type: 'object',
       required: ['error'],
       properties: {
+        status: { type: 'string', example: '400' },
+        successcode: { type: 'string', example: '400' },
+        message: { type: 'string', example: 'The request could not be completed.' },
         error: {
           type: 'object',
           required: ['code', 'message'],
@@ -39,6 +42,23 @@ export const commonComponents = {
         limit: { type: 'integer', example: 20 },
         total: { type: 'integer', example: 42 },
         totalPages: { type: 'integer', example: 3 },
+      },
+    },
+    MasterResponse: {
+      type: 'object',
+      required: ['status', 'successcode', 'message', 'data'],
+      properties: {
+        status: { type: 'string', example: '200' },
+        successcode: { type: 'string', example: '201' },
+        message: { type: 'string', example: 'Saved Successfully!' },
+        data: {
+          anyOf: [
+            { type: 'object' },
+            { type: 'array', items: { type: 'object' } },
+            { type: 'object', nullable: true },
+          ],
+        },
+        pagination: { $ref: '#/components/schemas/Pagination' },
       },
     },
   },

@@ -89,7 +89,7 @@ export async function deleteGroup(req, res, next) {
     if (userId === null) return
     const groupId = req.validatedBody?.groupId ?? req.validatedParams.id
     const deleted = await groupService.deleteGroup(tenantId, userId, groupId)
-    return deleted ? res.status(204).end() : notFound(res)
+    return deleted ? res.status(200).json(null) : notFound(res)
   } catch (error) {
     return next(error)
   }

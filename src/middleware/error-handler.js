@@ -27,10 +27,16 @@ export function errorHandler(error, req, res, next) {
     && [
       'uq_mr_group_tenant_name',
       'uq_mr_subgroup_tenant_group_name',
+      'uq_mr_brand_tenant_name',
     ].includes(error.constraint)
   ) {
     return res.status(409).json({
       error: { code: 'DUPLICATE_MASTER_NAME', message: 'That name already exists in this tenant.' },
+    })
+  }
+  if (error?.code === '23505' && error.constraint === 'uq_mr_tax_tenant_percentage') {
+    return res.status(409).json({
+      error: { code: 'DUPLICATE_TAX_PERCENTAGE', message: 'That tax percentage already exists in this tenant.' },
     })
   }
   if (error?.code === '23505') {

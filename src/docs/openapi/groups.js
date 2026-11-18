@@ -65,19 +65,8 @@ export const groupPaths = {
       ],
       responses: {
         200: {
-          description: 'Paginated groups.',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                required: ['data', 'pagination'],
-                properties: {
-                  data: { type: 'array', items: { $ref: '#/components/schemas/Group' } },
-                  pagination: { $ref: '#/components/schemas/Pagination' },
-                },
-              },
-            },
-          },
+          description: 'Paginated groups with the standard master response fields.',
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } },
         },
         400: { $ref: '#/components/responses/ValidationError' },
         401: { $ref: '#/components/responses/Unauthorized' },
@@ -99,7 +88,7 @@ export const groupPaths = {
       responses: {
         201: {
           description: 'Group created.',
-          content: { 'application/json': { schema: { $ref: '#/components/schemas/Group' } } },
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } },
         },
         400: { $ref: '#/components/responses/ValidationError' },
         401: { $ref: '#/components/responses/Unauthorized' },
@@ -124,7 +113,7 @@ export const groupPaths = {
       responses: {
         200: {
           description: 'Group details.',
-          content: { 'application/json': { schema: { $ref: '#/components/schemas/Group' } } },
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } },
         },
         401: { $ref: '#/components/responses/Unauthorized' },
         403: {
@@ -147,7 +136,7 @@ export const groupPaths = {
       responses: {
         200: {
           description: 'Group updated.',
-          content: { 'application/json': { schema: { $ref: '#/components/schemas/Group' } } },
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } },
         },
         400: { $ref: '#/components/responses/ValidationError' },
         401: { $ref: '#/components/responses/Unauthorized' },
@@ -169,7 +158,10 @@ export const groupPaths = {
       description: 'Sets recordFlag to 1. Deletion is blocked while visible subgroups exist.',
       security: [{ bearerAuth: [] }],
       responses: {
-        204: { description: 'Group soft-deleted.' },
+        200: {
+          description: 'Group soft-deleted.',
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } },
+        },
         401: { $ref: '#/components/responses/Unauthorized' },
         403: {
           description: 'Authenticated account has no valid tenant.',
@@ -206,7 +198,7 @@ export const groupPaths = {
         },
       },
       responses: {
-        200: { description: 'Paginated groups and pagination metadata.' },
+        200: { description: 'Paginated groups with the standard master response fields.', content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } } },
         400: { $ref: '#/components/responses/ValidationError' },
         401: { $ref: '#/components/responses/Unauthorized' },
       },
@@ -222,7 +214,7 @@ export const groupPaths = {
         content: { 'application/json': { schema: { $ref: '#/components/schemas/GroupCreate' } } },
       },
       responses: {
-        201: { description: 'Group created.' },
+        201: { description: 'Group created.', content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } } },
         400: { $ref: '#/components/responses/ValidationError' },
         401: { $ref: '#/components/responses/Unauthorized' },
       },
@@ -246,7 +238,7 @@ export const groupPaths = {
         },
       },
       responses: {
-        200: { description: 'Group details.' },
+        200: { description: 'Group details.', content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } } },
         401: { $ref: '#/components/responses/Unauthorized' },
         404: { $ref: '#/components/responses/NotFound' },
       },
@@ -262,7 +254,7 @@ export const groupPaths = {
         content: { 'application/json': { schema: { $ref: '#/components/schemas/GroupUpdate' } } },
       },
       responses: {
-        200: { description: 'Group updated.' },
+        200: { description: 'Group updated.', content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } } },
         400: { $ref: '#/components/responses/ValidationError' },
         401: { $ref: '#/components/responses/Unauthorized' },
         404: { $ref: '#/components/responses/NotFound' },
@@ -288,7 +280,7 @@ export const groupPaths = {
         },
       },
       responses: {
-        204: { description: 'Group soft-deleted.' },
+        200: { description: 'Group soft-deleted.', content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } } },
         401: { $ref: '#/components/responses/Unauthorized' },
         404: { $ref: '#/components/responses/NotFound' },
       },

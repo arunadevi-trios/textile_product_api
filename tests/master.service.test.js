@@ -12,6 +12,10 @@ const {
 } = await import('../src/services/master/group.service.js')
 const { createSubgroup, deleteSubgroup, updateSubgroup } =
   await import('../src/services/master/subgroup.service.js')
+const { createBrand, deleteBrand, updateBrand } =
+  await import('../src/services/master/brand.service.js')
+const { createTax, deleteTax, updateTax } =
+  await import('../src/services/master/tax.service.js')
 
 function fakeClient(responses) {
   const statements = []
@@ -185,4 +189,93 @@ test('subgroup creation locks its parent group before inserting', async (t) => {
   assert.deepEqual(client.parameters[2], [1, 7, 'Group9', 3])
   assert.match(client.statements[3], /INSERT INTO tbl_userlog/)
   assert.equal(client.parameters[3][1], 3)
+})
+
+test('brand creation records its maker and writes an audit log', async (t) => {
+  const client = fakeClient([
+    {},
+    { rows: [{ brandId: 11 }] },
+    {},
+    {},
+  ])
+  t.mock.method(pool, 'connect', async () => client)
+  t.mock.method(pool, 'query', async () => ({
+    rows: [{ brandId: 11, brandName: 'Brand12', makerId: 3, statusId: 1, recordFlag: 0 }],
+  }))
+
+  const brand = await createBrand(1, 3, 'Brand12')
+
+  assert.equal(brand.brandId, 11)
+  assert.match(client.statements[1], /br_maker_id/)
+  assert.deepEqual(client.parameters[1], [1, 'Brand12', 3])
+  assert.match(client.statements[2], /INSERT INTO tbl_userlog/)
+  assert.equal(client.parameters[2][1], 3)
+})
+
+test('brand updates and soft deletion each write an audit log', async (t) => {
+  const client = fakeClient([
+    {},
+    { rows: [{ brandId: 11 }] },
+    {},
+    {},
+    {},
+    { rowCount: 1 },
+    {},
+    {},
+  ])
+  t.mock.method(pool, 'connect', async () => client)
+  t.mock.method(pool, 'query', async () => ({
+    rows: [{ brandId: 11, brandName: 'Updated12', makerId: 3, statusId: 0, recordFlag: 0 }],
+  }))
+
+  await updateBrand(1, 3, 11, { brandName: 'Updated12', statusId: 0 })
+  assert.match(client.statements[2], /INSERT INTO tbl_userlog/)
+  assert.ok(client.statements.includes('COMMIT'))
+  assert.equal(await deleteBrand(1, 3, 11), true)
+  assert.match(client.statements[6], /INSERT INTO tbl_userlog/)
+  assert.match(client.statements[5], /SET br_delflag = 1/)
+})
+
+test('tax creation records its maker and writes an audit log', async (t) => {
+  const client = fakeClient([
+    {},
+    { rows: [{ taxId: 15 }] },
+    {},
+    {},
+  ])
+  t.mock.method(pool, 'connect', async () => client)
+  t.mock.method(pool, 'query', async () => ({
+    rows: [{ taxId: 15, taxPercentage: 2, makerId: 3, statusId: 1, recordFlag: 0 }],
+  }))
+
+  const tax = await createTax(1, 3, 2)
+
+  assert.equal(tax.taxPercentage, 2)
+  assert.match(client.statements[1], /tx_maker_id/)
+  assert.deepEqual(client.parameters[1], [1, 2, 3])
+  assert.match(client.statements[2], /INSERT INTO tbl_userlog/)
+  assert.equal(client.parameters[2][1], 3)
+})
+
+test('tax updates and soft deletion each write an audit log', async (t) => {
+  const client = fakeClient([
+    {},
+    { rows: [{ taxId: 15 }] },
+    {},
+    {},
+    {},
+    { rowCount: 1 },
+    {},
+    {},
+  ])
+  t.mock.method(pool, 'connect', async () => client)
+  t.mock.method(pool, 'query', async () => ({
+    rows: [{ taxId: 15, taxPercentage: 2, makerId: 3, statusId: 0, recordFlag: 0 }],
+  }))
+
+  await updateTax(1, 3, 15, { taxPercentage: 2, statusId: 0 })
+  assert.match(client.statements[2], /INSERT INTO tbl_userlog/)
+  assert.equal(await deleteTax(1, 3, 15), true)
+  assert.match(client.statements[6], /INSERT INTO tbl_userlog/)
+  assert.match(client.statements[5], /SET tx_delflag = 1/)
 })

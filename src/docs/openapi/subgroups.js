@@ -68,19 +68,8 @@ export const subgroupPaths = {
       ],
       responses: {
         200: {
-          description: 'Paginated subgroups.',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                required: ['data', 'pagination'],
-                properties: {
-                  data: { type: 'array', items: { $ref: '#/components/schemas/Subgroup' } },
-                  pagination: { $ref: '#/components/schemas/Pagination' },
-                },
-              },
-            },
-          },
+          description: 'Paginated subgroups with the standard master response fields.',
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } },
         },
         400: { $ref: '#/components/responses/ValidationError' },
         401: { $ref: '#/components/responses/Unauthorized' },
@@ -103,7 +92,7 @@ export const subgroupPaths = {
       responses: {
         201: {
           description: 'Subgroup created.',
-          content: { 'application/json': { schema: { $ref: '#/components/schemas/Subgroup' } } },
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } },
         },
         400: {
           description: 'Invalid request or selected group is unavailable.',
@@ -131,7 +120,7 @@ export const subgroupPaths = {
       responses: {
         200: {
           description: 'Subgroup details.',
-          content: { 'application/json': { schema: { $ref: '#/components/schemas/Subgroup' } } },
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } },
         },
         401: { $ref: '#/components/responses/Unauthorized' },
         403: {
@@ -154,7 +143,7 @@ export const subgroupPaths = {
       responses: {
         200: {
           description: 'Subgroup updated.',
-          content: { 'application/json': { schema: { $ref: '#/components/schemas/Subgroup' } } },
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } },
         },
         400: { $ref: '#/components/responses/ValidationError' },
         401: { $ref: '#/components/responses/Unauthorized' },
@@ -179,7 +168,10 @@ export const subgroupPaths = {
       description: 'Sets recordFlag to 1 so it is hidden from list and detail results.',
       security: [{ bearerAuth: [] }],
       responses: {
-        204: { description: 'Subgroup soft-deleted.' },
+        200: {
+          description: 'Subgroup soft-deleted.',
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } },
+        },
         401: { $ref: '#/components/responses/Unauthorized' },
         403: {
           description: 'Authenticated account has no valid tenant.',
@@ -213,7 +205,7 @@ export const subgroupPaths = {
         },
       },
       responses: {
-        200: { description: 'Paginated subgroups and pagination metadata.' },
+        200: { description: 'Paginated subgroups with the standard master response fields.', content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } } },
         400: { $ref: '#/components/responses/ValidationError' },
         401: { $ref: '#/components/responses/Unauthorized' },
       },
@@ -233,7 +225,7 @@ export const subgroupPaths = {
         },
       },
       responses: {
-        201: { description: 'Subgroup created.' },
+        201: { description: 'Subgroup created.', content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } } },
         400: { $ref: '#/components/responses/ValidationError' },
         401: { $ref: '#/components/responses/Unauthorized' },
       },
@@ -257,7 +249,7 @@ export const subgroupPaths = {
         },
       },
       responses: {
-        200: { description: 'Subgroup details.' },
+        200: { description: 'Subgroup details.', content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } } },
         401: { $ref: '#/components/responses/Unauthorized' },
         404: { $ref: '#/components/responses/NotFound' },
       },
@@ -277,7 +269,7 @@ export const subgroupPaths = {
         },
       },
       responses: {
-        200: { description: 'Subgroup updated.' },
+        200: { description: 'Subgroup updated.', content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } } },
         400: { $ref: '#/components/responses/ValidationError' },
         401: { $ref: '#/components/responses/Unauthorized' },
         404: { $ref: '#/components/responses/NotFound' },
@@ -303,7 +295,7 @@ export const subgroupPaths = {
         },
       },
       responses: {
-        204: { description: 'Subgroup soft-deleted.' },
+        200: { description: 'Subgroup soft-deleted.', content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } } },
         401: { $ref: '#/components/responses/Unauthorized' },
         404: { $ref: '#/components/responses/NotFound' },
       },

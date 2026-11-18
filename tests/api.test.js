@@ -6,8 +6,11 @@ import { newUserSchema } from '../src/schemas/auth.schema.js'
 import { masterListSchema } from '../src/schemas/master/common.schema.js'
 import { groupCreateSchema, groupUpdateSchema } from '../src/schemas/master/group.schema.js'
 import { subgroupCreateSchema } from '../src/schemas/master/subgroup.schema.js'
+import { brandCreateSchema } from '../src/schemas/master/brand.schema.js'
+import { taxCreateSchema } from '../src/schemas/master/tax.schema.js'
 import { normalizeTenantId } from '../src/utils/tenant-id.js'
 import { errorHandler } from '../src/middleware/error-handler.js'
+import { masterResponse } from '../src/middleware/master-response.js'
 
 let baseUrl
 let server
@@ -40,6 +43,9 @@ test('Swagger endpoints expose the complete API specification and UI', async () 
   assert.equal(specificationResponse.status, 200)
   const specification = await specificationResponse.json()
   assert.equal(specification.openapi, '3.0.3')
+  assert.ok(specification.components.schemas.MasterResponse)
+  assert.equal(specification.paths['/api/groups/{id}'].delete.responses['200'].content['application/json'].schema.$ref, '#/components/schemas/MasterResponse')
+  assert.ok(!specification.paths['/api/master/brand/deleteMaster'].post.responses['204'])
   for (const path of [
     '/api/health',
     '/api/auth/login',
@@ -60,13 +66,27 @@ test('Swagger endpoints expose the complete API specification and UI', async () 
     '/api/master/subgroup/getMasterDetails',
     '/api/master/subgroup/updateMaster',
     '/api/master/subgroup/deleteMaster',
+    '/api/brands',
+    '/api/brands/{id}',
+    '/api/master/brand/getMasterList',
+    '/api/master/brand/setMaster',
+    '/api/master/brand/getMasterDetails',
+    '/api/master/brand/updateMaster',
+    '/api/master/brand/deleteMaster',
+    '/api/taxes',
+    '/api/taxes/{id}',
+    '/api/master/tax/getMasterList',
+    '/api/master/tax/setMaster',
+    '/api/master/tax/getMasterDetails',
+    '/api/master/tax/updateMaster',
+    '/api/master/tax/deleteMaster',
   ]) {
     assert.ok(specification.paths[path], `${path} should be documented`)
   }
   const operationCount = Object.values(specification.paths)
     .reduce((total, path) => total + Object.keys(path)
       .filter((method) => ['get', 'post', 'put', 'delete'].includes(method)).length, 0)
-  assert.equal(operationCount, 25)
+  assert.equal(operationCount, 45)
 
   const uiResponse = await fetch(`${baseUrl}/api-docs/`)
   assert.equal(uiResponse.status, 200)
@@ -172,6 +192,27 @@ test('master names allow spaces but only letters and numbers otherwise', () => {
   }
 })
 
+test('brand names use the group name constraints and permit up to 250 characters', () => {
+  assert.equal(brandCreateSchema.validate({ brandName: 'Brand 12' }).error, undefined)
+  assert.equal(brandCreateSchema.validate({ brandName: 'A'.repeat(250) }).error, undefined)
+  for (const brandName of ['A', 'Brand-1', 'Brand  Name', 'A'.repeat(251)]) {
+    assert.ok(brandCreateSchema.validate({ brandName }).error, `${brandName} should be rejected`)
+  }
+  assert.equal(
+    brandCreateSchema.validate({ brandName: ' Brand' }).error.details[0].message,
+    'Use letters and numbers with single spaces between words; no leading or trailing spaces',
+  )
+})
+
+test('tax percentage accepts only integer values from 0 through 100', () => {
+  for (const taxPercentage of [0, 2, 100]) {
+    assert.equal(taxCreateSchema.validate({ taxPercentage }).error, undefined)
+  }
+  for (const taxPercentage of [-1, 101, 2.5, '2%']) {
+    assert.ok(taxCreateSchema.validate({ taxPercentage }).error, `${taxPercentage} should be rejected`)
+  }
+})
+
 test('subgroup input requires a group id and allows spaces in its name', () => {
   assert.equal(
     subgroupCreateSchema.validate({ groupId: 3, subgroupName: 'Mens Wear12' }).error,
@@ -214,6 +255,44 @@ test('master list payload validates server pagination and status filters', () =>
   assert.ok(masterListSchema.validate({ status: 'enabled' }).error)
 })
 
+test('master responses include status, successcode, message, and preserve list pagination', () => {
+  const makeResponse = (statusCode) => ({
+    statusCode,
+    json(body) {
+      this.body = body
+      return this
+    },
+  })
+
+  const createResponse = makeResponse(201)
+  masterResponse({ method: 'POST', path: '/setMaster' }, createResponse, () => {})
+  createResponse.json({ brandId: 7, brandName: 'Brand7' })
+  assert.deepEqual(createResponse.body, {
+    status: '200',
+    successcode: '201',
+    message: 'Saved Successfully!',
+    data: { brandId: 7, brandName: 'Brand7' },
+  })
+
+  const listResponse = makeResponse(200)
+  const pagination = { page: 1, limit: 10, total: 1, totalPages: 1 }
+  masterResponse({ method: 'POST', path: '/getMasterList' }, listResponse, () => {})
+  listResponse.json({ data: [{ brandId: 7 }], pagination })
+  assert.deepEqual(listResponse.body, {
+    status: '200',
+    successcode: '200',
+    message: 'Fetched Successfully!',
+    data: [{ brandId: 7 }],
+    pagination,
+  })
+
+  const deleteResponse = makeResponse(200)
+  masterResponse({ method: 'POST', path: '/deleteMaster' }, deleteResponse, () => {})
+  deleteResponse.json(null)
+  assert.equal(deleteResponse.body.message, 'Deleted Successfully!')
+  assert.equal(deleteResponse.body.successcode, '200')
+})
+
 test('group API validates names after authentication and before database access', async () => {
   const token = jwt.sign(
     { tenantId: 1 },
@@ -229,7 +308,10 @@ test('group API validates names after authentication and before database access'
     body: JSON.stringify({ groupName: 'A-' }),
   })
   assert.equal(response.status, 400)
-  assert.equal((await response.json()).error.code, 'VALIDATION_ERROR')
+  const body = await response.json()
+  assert.equal(body.error.code, 'VALIDATION_ERROR')
+  assert.equal(body.status, '400')
+  assert.equal(body.successcode, '400')
 })
 
 test('group and subgroup list endpoints are mounted and protected', async () => {
@@ -238,6 +320,10 @@ test('group and subgroup list endpoints are mounted and protected', async () => 
     '/api/subgroups',
     '/api/master/group/getMasterList',
     '/api/master/subgroup/getMasterList',
+    '/api/brands',
+    '/api/taxes',
+    '/api/master/brand/getMasterList',
+    '/api/master/tax/getMasterList',
   ]) {
     const isPayloadEndpoint = endpoint.includes('/master/')
     const response = await fetch(`${baseUrl}${endpoint}`, isPayloadEndpoint
@@ -248,6 +334,10 @@ test('group and subgroup list endpoints are mounted and protected', async () => 
         }
       : undefined)
     assert.equal(response.status, 401, `${endpoint} should require authentication, not return 404`)
-    assert.equal((await response.json()).error.code, 'UNAUTHORIZED')
+    const body = await response.json()
+    assert.equal(body.error.code, 'UNAUTHORIZED')
+    assert.equal(body.status, '401')
+    assert.equal(body.successcode, '401')
+    assert.equal(typeof body.message, 'string')
   }
 })

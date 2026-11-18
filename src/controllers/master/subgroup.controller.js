@@ -99,7 +99,7 @@ export async function deleteSubgroup(req, res, next) {
       userId,
       req.validatedBody?.subgroupId ?? req.validatedParams.id,
     )
-    return deleted ? res.status(204).end() : notFound(res, 'Subgroup')
+    return deleted ? res.status(200).json(null) : notFound(res, 'Subgroup')
   } catch (error) {
     return next(error)
   }
