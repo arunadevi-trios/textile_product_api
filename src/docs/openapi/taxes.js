@@ -49,64 +49,7 @@ const listRequest = {
 }
 
 export const taxPaths = {
-  '/api/taxes': {
-    get: {
-      tags: ['Taxes'],
-      summary: 'List taxes',
-      description: 'Paginated taxes belonging to the authenticated tenant.',
-      security: [{ bearerAuth: [] }],
-      parameters: [
-        { $ref: '#/components/parameters/Page' },
-        { $ref: '#/components/parameters/Limit' },
-        { $ref: '#/components/parameters/Status' },
-        { $ref: '#/components/parameters/Search' },
-      ],
-      responses: { 200: { description: 'Paginated taxes with the standard master response fields.', content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } } }, 400: { $ref: '#/components/responses/ValidationError' }, 401: { $ref: '#/components/responses/Unauthorized' } },
-    },
-    post: {
-      tags: ['Taxes'],
-      summary: 'Create a tax rate',
-      security: [{ bearerAuth: [] }],
-      requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/TaxCreate' } } } },
-      responses: { 201: { description: 'Tax created.', content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } } }, 400: { $ref: '#/components/responses/ValidationError' }, 401: { $ref: '#/components/responses/Unauthorized' }, 409: { description: 'Tax percentage already exists in this tenant.' } },
-    },
-  },
-  '/api/taxes/{id}': {
-    parameters: [{ $ref: '#/components/parameters/Id' }],
-    get: {
-      tags: ['Taxes'],
-      summary: 'Get a tax rate',
-      security: [{ bearerAuth: [] }],
-      responses: { 200: { description: 'Tax details.', content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } } }, 401: { $ref: '#/components/responses/Unauthorized' }, 404: { $ref: '#/components/responses/NotFound' } },
-    },
-    put: {
-      tags: ['Taxes'],
-      summary: 'Update or deactivate a tax rate',
-      security: [{ bearerAuth: [] }],
-      requestBody: {
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              allOf: [
-                { $ref: '#/components/schemas/TaxCreate' },
-                { type: 'object', properties: { statusId: { type: 'integer', enum: [0, 1] } } },
-              ],
-            },
-          },
-        },
-      },
-      responses: { 200: { description: 'Tax updated.', content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } } }, 400: { $ref: '#/components/responses/ValidationError' }, 401: { $ref: '#/components/responses/Unauthorized' }, 404: { $ref: '#/components/responses/NotFound' }, 409: { description: 'Tax percentage already exists in this tenant.' } },
-    },
-    delete: {
-      tags: ['Taxes'],
-      summary: 'Soft-delete a tax rate',
-      description: 'Sets recordFlag to 1.',
-      security: [{ bearerAuth: [] }],
-      responses: { 200: { description: 'Tax soft-deleted.', content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } } }, 401: { $ref: '#/components/responses/Unauthorized' }, 404: { $ref: '#/components/responses/NotFound' } },
-    },
-  },
-  '/api/master/tax/getMasterList': {
+  '/api/master/tax/getTaxList': {
     post: {
       tags: ['Taxes'],
       summary: 'List taxes with pagination and filters',
@@ -115,7 +58,7 @@ export const taxPaths = {
       responses: { 200: { description: 'Paginated taxes with the standard master response fields.', content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } } }, 400: { $ref: '#/components/responses/ValidationError' }, 401: { $ref: '#/components/responses/Unauthorized' } },
     },
   },
-  '/api/master/tax/setMaster': {
+  '/api/master/tax/setTax': {
     post: {
       tags: ['Taxes'],
       summary: 'Create a tax rate',
@@ -124,7 +67,7 @@ export const taxPaths = {
       responses: { 201: { description: 'Tax created.', content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } } }, 400: { $ref: '#/components/responses/ValidationError' }, 401: { $ref: '#/components/responses/Unauthorized' }, 409: { description: 'Duplicate tax percentage.' } },
     },
   },
-  '/api/master/tax/getMasterDetails': {
+  '/api/master/tax/getTaxDetails': {
     post: {
       tags: ['Taxes'],
       summary: 'Get tax details',
@@ -144,7 +87,7 @@ export const taxPaths = {
       responses: { 200: { description: 'Tax details.', content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } } }, 401: { $ref: '#/components/responses/Unauthorized' }, 404: { $ref: '#/components/responses/NotFound' } },
     },
   },
-  '/api/master/tax/updateMaster': {
+  '/api/master/tax/updateTax': {
     post: {
       tags: ['Taxes'],
       summary: 'Update or deactivate a tax rate',
@@ -153,7 +96,7 @@ export const taxPaths = {
       responses: { 200: { description: 'Tax updated.', content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } } }, 400: { $ref: '#/components/responses/ValidationError' }, 401: { $ref: '#/components/responses/Unauthorized' }, 404: { $ref: '#/components/responses/NotFound' }, 409: { description: 'Duplicate tax percentage.' } },
     },
   },
-  '/api/master/tax/deleteMaster': {
+  '/api/master/tax/deleteTax': {
     post: {
       tags: ['Taxes'],
       summary: 'Soft-delete a tax rate',

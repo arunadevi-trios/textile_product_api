@@ -51,132 +51,7 @@ export const groupSchemas = {
 }
 
 export const groupPaths = {
-  '/api/groups': {
-    get: {
-      tags: ['Groups'],
-      summary: 'List groups',
-      description: 'Returns groups for the authenticated tenant, including visible subgroup counts.',
-      security: [{ bearerAuth: [] }],
-      parameters: [
-        { $ref: '#/components/parameters/Page' },
-        { $ref: '#/components/parameters/Limit' },
-        { $ref: '#/components/parameters/Status' },
-        { $ref: '#/components/parameters/Search' },
-      ],
-      responses: {
-        200: {
-          description: 'Paginated groups with the standard master response fields.',
-          content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } },
-        },
-        400: { $ref: '#/components/responses/ValidationError' },
-        401: { $ref: '#/components/responses/Unauthorized' },
-        403: {
-          description: 'Authenticated account has no valid tenant.',
-          content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiError' } } },
-        },
-        500: { $ref: '#/components/responses/ServerError' },
-      },
-    },
-    post: {
-      tags: ['Groups'],
-      summary: 'Create a group',
-      security: [{ bearerAuth: [] }],
-      requestBody: {
-        required: true,
-        content: { 'application/json': { schema: { $ref: '#/components/schemas/GroupCreate' } } },
-      },
-      responses: {
-        201: {
-          description: 'Group created.',
-          content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } },
-        },
-        400: { $ref: '#/components/responses/ValidationError' },
-        401: { $ref: '#/components/responses/Unauthorized' },
-        403: {
-          description: 'Authenticated account has no valid tenant.',
-          content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiError' } } },
-        },
-        409: {
-          description: 'A visible group with that name already exists.',
-          content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiError' } } },
-        },
-        500: { $ref: '#/components/responses/ServerError' },
-      },
-    },
-  },
-  '/api/groups/{id}': {
-    parameters: [{ $ref: '#/components/parameters/Id' }],
-    get: {
-      tags: ['Groups'],
-      summary: 'Get a group',
-      security: [{ bearerAuth: [] }],
-      responses: {
-        200: {
-          description: 'Group details.',
-          content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } },
-        },
-        401: { $ref: '#/components/responses/Unauthorized' },
-        403: {
-          description: 'Authenticated account has no valid tenant.',
-          content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiError' } } },
-        },
-        404: { $ref: '#/components/responses/NotFound' },
-        500: { $ref: '#/components/responses/ServerError' },
-      },
-    },
-    put: {
-      tags: ['Groups'],
-      summary: 'Update a group',
-      description: 'A group with visible subgroups cannot be deactivated.',
-      security: [{ bearerAuth: [] }],
-      requestBody: {
-        required: true,
-        content: { 'application/json': { schema: { $ref: '#/components/schemas/GroupUpdate' } } },
-      },
-      responses: {
-        200: {
-          description: 'Group updated.',
-          content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } },
-        },
-        400: { $ref: '#/components/responses/ValidationError' },
-        401: { $ref: '#/components/responses/Unauthorized' },
-        403: {
-          description: 'Authenticated account has no valid tenant.',
-          content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiError' } } },
-        },
-        404: { $ref: '#/components/responses/NotFound' },
-        409: {
-          description: 'Duplicate name or group has visible subgroups.',
-          content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiError' } } },
-        },
-        500: { $ref: '#/components/responses/ServerError' },
-      },
-    },
-    delete: {
-      tags: ['Groups'],
-      summary: 'Soft-delete a group',
-      description: 'Sets recordFlag to 1. Deletion is blocked while visible subgroups exist.',
-      security: [{ bearerAuth: [] }],
-      responses: {
-        200: {
-          description: 'Group soft-deleted.',
-          content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } },
-        },
-        401: { $ref: '#/components/responses/Unauthorized' },
-        403: {
-          description: 'Authenticated account has no valid tenant.',
-          content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiError' } } },
-        },
-        404: { $ref: '#/components/responses/NotFound' },
-        409: {
-          description: 'Group has visible subgroups and cannot be deleted.',
-          content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiError' } } },
-        },
-        500: { $ref: '#/components/responses/ServerError' },
-      },
-    },
-  },
-  '/api/master/group/getMasterList': {
+  '/api/master/group/getGroupList': {
     post: {
       tags: ['Groups'],
       summary: 'List groups using a JSON filter payload',
@@ -204,7 +79,7 @@ export const groupPaths = {
       },
     },
   },
-  '/api/master/group/setMaster': {
+  '/api/master/group/setGroup': {
     post: {
       tags: ['Groups'],
       summary: 'Create a group',
@@ -220,7 +95,7 @@ export const groupPaths = {
       },
     },
   },
-  '/api/master/group/getMasterDetails': {
+  '/api/master/group/getGroupDetails': {
     post: {
       tags: ['Groups'],
       summary: 'Get group details',
@@ -244,7 +119,7 @@ export const groupPaths = {
       },
     },
   },
-  '/api/master/group/updateMaster': {
+  '/api/master/group/updateGroup': {
     post: {
       tags: ['Groups'],
       summary: 'Update a group',
@@ -261,7 +136,7 @@ export const groupPaths = {
       },
     },
   },
-  '/api/master/group/deleteMaster': {
+  '/api/master/group/deleteGroup': {
     post: {
       tags: ['Groups'],
       summary: 'Soft-delete a group',

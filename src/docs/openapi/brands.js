@@ -62,92 +62,7 @@ const listRequest = {
 }
 
 export const brandPaths = {
-  '/api/brands': {
-    get: {
-      tags: ['Brands'],
-      summary: 'List brands',
-      description: 'Paginated brands belonging to the authenticated tenant.',
-      security: [{ bearerAuth: [] }],
-      parameters: [
-        { $ref: '#/components/parameters/Page' },
-        { $ref: '#/components/parameters/Limit' },
-        { $ref: '#/components/parameters/Status' },
-        { $ref: '#/components/parameters/Search' },
-      ],
-      responses: {
-        200: {
-          description: 'Paginated brands with the standard master response fields.',
-          content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } },
-        },
-        ...pageResponses,
-      },
-    },
-    post: {
-      tags: ['Brands'],
-      summary: 'Create a brand',
-      security: [{ bearerAuth: [] }],
-      requestBody: {
-        required: true,
-        content: { 'application/json': { schema: { $ref: '#/components/schemas/BrandCreate' } } },
-      },
-      responses: {
-        201: { description: 'Brand created.', content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } } },
-        400: pageResponses[400],
-        401: pageResponses[401],
-        409: { description: 'A brand with that name already exists in this tenant.' },
-      },
-    },
-  },
-  '/api/brands/{id}': {
-    parameters: [{ $ref: '#/components/parameters/Id' }],
-    get: {
-      tags: ['Brands'],
-      summary: 'Get a brand',
-      security: [{ bearerAuth: [] }],
-      responses: {
-        200: { description: 'Brand details.', content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } } },
-        401: pageResponses[401],
-        404: { $ref: '#/components/responses/NotFound' },
-      },
-    },
-    put: {
-      tags: ['Brands'],
-      summary: 'Update or deactivate a brand',
-      security: [{ bearerAuth: [] }],
-      requestBody: {
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              allOf: [
-                { $ref: '#/components/schemas/BrandCreate' },
-                { type: 'object', properties: { statusId: { type: 'integer', enum: [0, 1] } } },
-              ],
-            },
-          },
-        },
-      },
-      responses: {
-        200: { description: 'Brand updated.', content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } } },
-        400: pageResponses[400],
-        401: pageResponses[401],
-        404: { $ref: '#/components/responses/NotFound' },
-        409: { description: 'A brand with that name already exists in this tenant.' },
-      },
-    },
-    delete: {
-      tags: ['Brands'],
-      summary: 'Soft-delete a brand',
-      description: 'Sets recordFlag to 1.',
-      security: [{ bearerAuth: [] }],
-      responses: {
-        200: { description: 'Brand soft-deleted.', content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } } },
-        401: pageResponses[401],
-        404: { $ref: '#/components/responses/NotFound' },
-      },
-    },
-  },
-  '/api/master/brand/getMasterList': {
+  '/api/master/brand/getBrandList': {
     post: {
       tags: ['Brands'],
       summary: 'List brands with pagination and filters',
@@ -156,7 +71,7 @@ export const brandPaths = {
       responses: { 200: { description: 'Paginated brands with the standard master response fields.', content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } } }, 400: pageResponses[400], 401: pageResponses[401] },
     },
   },
-  '/api/master/brand/setMaster': {
+  '/api/master/brand/setBrand': {
     post: {
       tags: ['Brands'],
       summary: 'Create a brand',
@@ -165,7 +80,7 @@ export const brandPaths = {
       responses: { 201: { description: 'Brand created.', content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } } }, 400: pageResponses[400], 401: pageResponses[401], 409: { description: 'Duplicate brand name.' } },
     },
   },
-  '/api/master/brand/getMasterDetails': {
+  '/api/master/brand/getBrandDetails': {
     post: {
       tags: ['Brands'],
       summary: 'Get brand details',
@@ -174,7 +89,7 @@ export const brandPaths = {
       responses: { 200: { description: 'Brand details.', content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } } }, 401: pageResponses[401], 404: { $ref: '#/components/responses/NotFound' } },
     },
   },
-  '/api/master/brand/updateMaster': {
+  '/api/master/brand/updateBrand': {
     post: {
       tags: ['Brands'],
       summary: 'Update or deactivate a brand',
@@ -183,7 +98,7 @@ export const brandPaths = {
       responses: { 200: { description: 'Brand updated.', content: { 'application/json': { schema: { $ref: '#/components/schemas/MasterResponse' } } } }, 400: pageResponses[400], 401: pageResponses[401], 404: { $ref: '#/components/responses/NotFound' }, 409: { description: 'Duplicate brand name.' } },
     },
   },
-  '/api/master/brand/deleteMaster': {
+  '/api/master/brand/deleteBrand': {
     post: {
       tags: ['Brands'],
       summary: 'Soft-delete a brand',

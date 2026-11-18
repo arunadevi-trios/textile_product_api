@@ -44,49 +44,51 @@ test('Swagger endpoints expose the complete API specification and UI', async () 
   const specification = await specificationResponse.json()
   assert.equal(specification.openapi, '3.0.3')
   assert.ok(specification.components.schemas.MasterResponse)
-  assert.equal(specification.paths['/api/groups/{id}'].delete.responses['200'].content['application/json'].schema.$ref, '#/components/schemas/MasterResponse')
-  assert.ok(!specification.paths['/api/master/brand/deleteMaster'].post.responses['204'])
+  assert.equal(specification.paths['/api/master/group/deleteGroup'].post.responses['200'].content['application/json'].schema.$ref, '#/components/schemas/MasterResponse')
+  assert.ok(!specification.paths['/api/master/brand/deleteBrand'].post.responses['204'])
   for (const path of [
     '/api/health',
     '/api/auth/login',
     '/api/auth/refresh',
     '/api/auth/logout',
     '/api/auth/me',
-    '/api/groups',
-    '/api/groups/{id}',
-    '/api/subgroups',
-    '/api/subgroups/{id}',
-    '/api/master/group/getMasterList',
-    '/api/master/group/setMaster',
-    '/api/master/group/getMasterDetails',
-    '/api/master/group/updateMaster',
-    '/api/master/group/deleteMaster',
-    '/api/master/subgroup/getMasterList',
-    '/api/master/subgroup/setMaster',
-    '/api/master/subgroup/getMasterDetails',
-    '/api/master/subgroup/updateMaster',
-    '/api/master/subgroup/deleteMaster',
-    '/api/brands',
-    '/api/brands/{id}',
-    '/api/master/brand/getMasterList',
-    '/api/master/brand/setMaster',
-    '/api/master/brand/getMasterDetails',
-    '/api/master/brand/updateMaster',
-    '/api/master/brand/deleteMaster',
-    '/api/taxes',
-    '/api/taxes/{id}',
-    '/api/master/tax/getMasterList',
-    '/api/master/tax/setMaster',
-    '/api/master/tax/getMasterDetails',
-    '/api/master/tax/updateMaster',
-    '/api/master/tax/deleteMaster',
+    '/api/master/group/getGroupList',
+    '/api/master/group/setGroup',
+    '/api/master/group/getGroupDetails',
+    '/api/master/group/updateGroup',
+    '/api/master/group/deleteGroup',
+    '/api/master/subgroup/getSubgroupList',
+    '/api/master/subgroup/setSubgroup',
+    '/api/master/subgroup/getSubgroupDetails',
+    '/api/master/subgroup/updateSubgroup',
+    '/api/master/subgroup/deleteSubgroup',
+    '/api/master/brand/getBrandList',
+    '/api/master/brand/setBrand',
+    '/api/master/brand/getBrandDetails',
+    '/api/master/brand/updateBrand',
+    '/api/master/brand/deleteBrand',
+    '/api/master/tax/getTaxList',
+    '/api/master/tax/setTax',
+    '/api/master/tax/getTaxDetails',
+    '/api/master/tax/updateTax',
+    '/api/master/tax/deleteTax',
   ]) {
     assert.ok(specification.paths[path], `${path} should be documented`)
+  }
+  for (const path of [
+    '/api/groups',
+    '/api/subgroups',
+    '/api/brands',
+    '/api/taxes',
+    '/api/master/group/getMasterList',
+    '/api/master/brand/getMasterList',
+  ]) {
+    assert.ok(!specification.paths[path], `${path} should not be documented as a duplicate route`)
   }
   const operationCount = Object.values(specification.paths)
     .reduce((total, path) => total + Object.keys(path)
       .filter((method) => ['get', 'post', 'put', 'delete'].includes(method)).length, 0)
-  assert.equal(operationCount, 45)
+  assert.equal(operationCount, 25)
 
   const uiResponse = await fetch(`${baseUrl}/api-docs/`)
   assert.equal(uiResponse.status, 200)
@@ -102,9 +104,10 @@ test('login validates the request body before accessing the database', async () 
   })
   assert.equal(response.status, 400)
   const payload = await response.json()
-  assert.equal(payload.error.code, 'VALIDATION_ERROR')
-  assert.ok(payload.error.details.some(({ field }) => field === 'username'))
-  assert.ok(payload.error.details.some(({ field }) => field === 'password'))
+  assert.equal(payload.status, 400)
+  assert.equal(payload.message, 'Invalid fields')
+  assert.ok(payload.body.some(({ field }) => field === 'username'))
+  assert.ok(payload.body.some(({ field }) => field === 'password'))
 })
 
 test('malformed JSON receives a client error response', async () => {
@@ -114,10 +117,12 @@ test('malformed JSON receives a client error response', async () => {
     body: '{',
   })
   assert.equal(response.status, 400)
-  assert.equal((await response.json()).error.code, 'INVALID_JSON')
+  const payload = await response.json()
+  assert.equal(payload.status, 400)
+  assert.equal(payload.message, 'Request body must contain valid JSON.')
 })
 
-test('group conflict errors return a clear conflict response', () => {
+test('unexpected API errors return the standard server error response', () => {
   const response = {
     statusCode: null,
     body: null,
@@ -129,17 +134,17 @@ test('group conflict errors return a clear conflict response', () => {
       this.body = body
       return this
     },
+    send(body) {
+      this.body = body
+      return this
+    },
   }
-  const error = new Error('Groups with subgroups cannot be deactivated or deleted.')
-  error.code = 'GROUP_HAS_SUBGROUPS'
+  const error = new Error('Unexpected database failure.')
 
   errorHandler(error, {}, response, () => assert.fail('Unexpected error forwarding'))
 
-  assert.equal(response.statusCode, 409)
-  assert.deepEqual(response.body.error, {
-    code: 'GROUP_HAS_SUBGROUPS',
-    message: 'Groups with subgroups cannot be deactivated or deleted.',
-  })
+  assert.equal(response.statusCode, 500)
+  assert.equal(response.body.message, 'An unexpected server error occurred.')
 })
 
 test('refresh without a session cookie is unauthorized', async () => {
@@ -265,8 +270,8 @@ test('master responses include status, successcode, message, and preserve list p
   })
 
   const createResponse = makeResponse(201)
-  masterResponse({ method: 'POST', path: '/setMaster' }, createResponse, () => {})
-  createResponse.json({ brandId: 7, brandName: 'Brand7' })
+  masterResponse({ method: 'POST', path: '/setBrand' }, createResponse, () => {})
+  createResponse.json({ status: '200', successcode: '201', message: 'Saved Successfully!', data: { brandId: 7, brandName: 'Brand7' } })
   assert.deepEqual(createResponse.body, {
     status: '200',
     successcode: '201',
@@ -276,21 +281,26 @@ test('master responses include status, successcode, message, and preserve list p
 
   const listResponse = makeResponse(200)
   const pagination = { page: 1, limit: 10, total: 1, totalPages: 1 }
-  masterResponse({ method: 'POST', path: '/getMasterList' }, listResponse, () => {})
-  listResponse.json({ data: [{ brandId: 7 }], pagination })
+  masterResponse({ method: 'POST', path: '/getBrandList' }, listResponse, () => {})
+  listResponse.json({
+    status: '200',
+    successcode: '206',
+    message: 'Data Retrieved!',
+    data: { brand_list: [{ brandId: 7 }], page: 1, limit: 10, total: 1 },
+  })
   assert.deepEqual(listResponse.body, {
     status: '200',
-    successcode: '200',
-    message: 'Fetched Successfully!',
+    successcode: '206',
+    message: 'Data Retrieved!',
     data: [{ brandId: 7 }],
-    pagination,
+    pagination: { ...pagination, total: 1 },
   })
 
   const deleteResponse = makeResponse(200)
-  masterResponse({ method: 'POST', path: '/deleteMaster' }, deleteResponse, () => {})
-  deleteResponse.json(null)
+  masterResponse({ method: 'POST', path: '/deleteBrand' }, deleteResponse, () => {})
+  deleteResponse.json({ status: '200', successcode: '203', message: 'Deleted Successfully!', data: {} })
   assert.equal(deleteResponse.body.message, 'Deleted Successfully!')
-  assert.equal(deleteResponse.body.successcode, '200')
+  assert.equal(deleteResponse.body.successcode, '203')
 })
 
 test('group API validates names after authentication and before database access', async () => {
@@ -299,7 +309,7 @@ test('group API validates names after authentication and before database access'
     process.env.JWT_SECRET,
     { subject: '1', issuer: 'textile-product-api', expiresIn: '5m' },
   )
-  const response = await fetch(`${baseUrl}/api/groups`, {
+  const response = await fetch(`${baseUrl}/api/master/group/setGroup`, {
     method: 'POST',
     headers: {
       authorization: `Bearer ${token}`,
@@ -309,21 +319,18 @@ test('group API validates names after authentication and before database access'
   })
   assert.equal(response.status, 400)
   const body = await response.json()
-  assert.equal(body.error.code, 'VALIDATION_ERROR')
+  assert.equal(body.message, 'Invalid fields')
   assert.equal(body.status, '400')
   assert.equal(body.successcode, '400')
+  assert.ok(body.body.some(({ field }) => field === 'groupName'))
 })
 
 test('group and subgroup list endpoints are mounted and protected', async () => {
   for (const endpoint of [
-    '/api/groups',
-    '/api/subgroups',
-    '/api/master/group/getMasterList',
-    '/api/master/subgroup/getMasterList',
-    '/api/brands',
-    '/api/taxes',
-    '/api/master/brand/getMasterList',
-    '/api/master/tax/getMasterList',
+    '/api/master/group/getGroupList',
+    '/api/master/subgroup/getSubgroupList',
+    '/api/master/brand/getBrandList',
+    '/api/master/tax/getTaxList',
   ]) {
     const isPayloadEndpoint = endpoint.includes('/master/')
     const response = await fetch(`${baseUrl}${endpoint}`, isPayloadEndpoint
@@ -339,5 +346,33 @@ test('group and subgroup list endpoints are mounted and protected', async () => 
     assert.equal(body.status, '401')
     assert.equal(body.successcode, '401')
     assert.equal(typeof body.message, 'string')
+  }
+})
+
+test('duplicate master REST and generic action routes are no longer mounted', async () => {
+  const token = jwt.sign(
+    { tenantId: 1 },
+    process.env.JWT_SECRET,
+    { subject: '1', issuer: 'textile-product-api', expiresIn: '5m' },
+  )
+  for (const endpoint of [
+    '/api/groups',
+    '/api/subgroups',
+    '/api/brands',
+    '/api/taxes',
+    '/api/master/group/getMasterList',
+    '/api/master/subgroup/getMasterList',
+    '/api/master/brand/getMasterList',
+    '/api/master/tax/getMasterList',
+  ]) {
+    const response = await fetch(`${baseUrl}${endpoint}`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${token}`,
+        'content-type': 'application/json',
+      },
+      body: '{}',
+    })
+    assert.equal(response.status, 404, `${endpoint} should not remain as a duplicate route`)
   }
 })
